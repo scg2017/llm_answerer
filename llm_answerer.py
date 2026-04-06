@@ -33,7 +33,7 @@ ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 CACHE_RETRY_PROBABILITY = float(os.getenv("CACHE_RETRY_PROBABILITY", "0.1"))
 
 class LLMAnswerer:
-    def __init__(self, api_key=None, model="gpt-3.5-turbo", db_path="answer_cache.db",
+    def __init__(self, api_key=None, model="gpt-3.5-turbo", db_path=None,
                  base_url=None, custom_headers=None):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
 
@@ -44,7 +44,7 @@ class LLMAnswerer:
             )
 
         self.model = model
-        self.db_path = db_path
+        self.db_path = db_path or os.getenv("DB_PATH", "answer_cache.db")
         self.base_url = base_url or os.getenv("OPENAI_BASE_URL")
         self.custom_headers = custom_headers or {}
         self.db_conn = None

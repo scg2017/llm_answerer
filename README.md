@@ -36,7 +36,7 @@
 ### 1. 安装依赖
 
 ```bash
-pip install openai fastapi uvicorn aiosqlite python-dotenv aiohttp
+pip install -r requirements.txt
 ```
 
 ### 2. 配置环境变量
@@ -63,6 +63,10 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 
 # 服务监听端口（默认：5000）
 LISTEN_PORT=5000
+
+# SQLite缓存路径（默认：answer_cache.db）
+# Docker 建议使用 /data/answer_cache.db
+DB_PATH=answer_cache.db
 
 # 访问令牌（用于接口鉴权）
 ACCESS_TOKEN=your_secret_token_here
@@ -93,6 +97,61 @@ python llm_answerer.py --skip-cache
 ```
 
 启动后会显示服务配置信息和 AnswererWrapper 集成代码。
+
+## Docker 部署
+
+### 方式 1：Docker Compose（推荐）
+
+1. 复制环境变量文件并填写密钥：
+
+```bash
+cp .env.example .env
+```
+
+2. 构建并启动：
+
+```bash
+docker compose up -d --build
+```
+
+3. 查看日志：
+
+```bash
+docker compose logs -f
+```
+
+4. 停止服务：
+
+```bash
+docker compose down
+```
+
+说明：
+- 容器内服务固定监听 5000 端口。
+- 主机端口可通过 `.env` 中 `HOST_PORT` 调整（默认 5000）。
+- SQLite 缓存会持久化到 `./data/answer_cache.db`。
+
+### 方式 2：Docker Run
+
+```bash
+docker build -t llm-answerer .
+
+docker run -d \
+  --name llm-answerer \
+  --env-file .env \
+  -e LISTEN_PORT=5000 \
+  -e DB_PATH=/data/answer_cache.db \
+  -p 5000:5000 \
+  -v llm-answerer-data:/data \
+  llm-answerer
+```
+
+如果需要关闭容器：
+
+```bash
+docker stop llm-answerer
+docker rm llm-answerer
+```
 
 ## 工作流程
 
@@ -519,16 +578,19 @@ curl -X POST http://localhost:5000/search \
 ## 项目文件结构
 
 ```
-question-libraries/
+llm_answerer/
 ├── llm_answerer.py          # 主程序：FastAPI 服务 + LLMAnswerer 类
 ├── confidence.py            # 置信度评估模块
 ├── search.py                # Exa AI 搜索服务封装
 ├── .env.example             # 环境变量配置模板
 ├── .env                     # 环境变量配置（需自行创建）
-├── answer_cache.db          # SQLite 数据库（自动创建）
+├── requirements.txt         # Python 依赖列表
+├── Dockerfile               # Docker 镜像构建文件
+├── docker-compose.yml       # 一键启动编排
+├── .dockerignore            # Docker 构建忽略文件
+├── data/                    # Docker 缓存持久化目录（自动创建）
 ├── README.md                # 项目文档（本文件）
-├── CLAUDE.md                # Claude Code 开发指南
-└── requirements.txt         # 依赖列表（可选）
+└── answer_cache.db          # 本地运行时 SQLite 数据库（自动创建）
 ```
 
 ## 性能指标

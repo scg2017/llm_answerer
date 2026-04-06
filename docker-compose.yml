@@ -1,0 +1,16 @@
+services:
+  llm-answerer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: llm-answerer
+    env_file:
+      - .env
+    environment:
+      LISTEN_PORT: "5000"
+      DB_PATH: /data/answer_cache.db
+    ports:
+      - "${HOST_PORT:-5000}:5000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

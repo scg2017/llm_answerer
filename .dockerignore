@@ -1,0 +1,8 @@
+.git
+.gitignore
+.vscode
+__pycache__/
+*.py[cod]
+*.db
+.env
+data/
