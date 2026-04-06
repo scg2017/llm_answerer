@@ -173,7 +173,7 @@ docker compose up -d --build
 项目已提供工作流文件：`.github/workflows/ghcr.yml`
 
 工作流行为：
-- push 到 `main`：自动构建并推送镜像到 `ghcr.io/<owner>/<repo>`
+- push 到 `main`：自动构建并推送多架构镜像到 `ghcr.io/<owner>/<repo>`（`linux/amd64` + `linux/arm64`）
 - pull request 到 `main`：只构建校验，不推送
 - 手动触发：支持 `workflow_dispatch`
 
@@ -196,6 +196,30 @@ docker run -d \
 提示：
 - 如果拉取私有包，需要使用具备 `read:packages` 权限的 GitHub Token 登录。
 - 首次推送后可在仓库的 Packages 页面确认镜像是否发布成功。
+
+### 如何确认镜像是否成功（含多架构）
+
+方式 1：看 GitHub Actions
+- 进入仓库的 Actions 页面，找到“构建并推送Docker镜像到GHCR”工作流。
+- 运行成功后，日志中会出现 `docker buildx imagetools inspect` 输出。
+- 输出中包含以下平台即为成功：
+  - `linux/amd64`
+  - `linux/arm64`
+
+方式 2：命令行检查 manifest
+
+```bash
+docker buildx imagetools inspect ghcr.io/<owner>/<repo>:latest
+```
+
+方式 3：按平台拉取测试
+
+```bash
+docker pull --platform linux/amd64 ghcr.io/<owner>/<repo>:latest
+docker pull --platform linux/arm64 ghcr.io/<owner>/<repo>:latest
+```
+
+两条命令都能拉取成功，说明多架构镜像发布正常。
 
 ## 工作流程
 
