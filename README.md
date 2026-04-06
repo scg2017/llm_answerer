@@ -153,6 +153,50 @@ docker stop llm-answerer
 docker rm llm-answerer
 ```
 
+## 本地无 Docker 的部署方案
+
+如果本地没有 Docker，有两种推荐方式：
+
+### 方案 1：推到有 Docker 的服务器再部署
+
+```bash
+git clone <你的仓库地址>
+cd <仓库目录>
+cp .env.example .env
+docker compose up -d --build
+```
+
+适用场景：你有自己的云服务器、NAS、或其他可安装 Docker 的主机。
+
+### 方案 2：用 GitHub Actions 自动构建并推送 GHCR（推荐）
+
+项目已提供工作流文件：`.github/workflows/ghcr.yml`
+
+工作流行为：
+- push 到 `main`：自动构建并推送镜像到 `ghcr.io/<owner>/<repo>`
+- pull request 到 `main`：只构建校验，不推送
+- 手动触发：支持 `workflow_dispatch`
+
+镜像生成后，在任意有 Docker 的机器执行：
+
+```bash
+docker login ghcr.io -u <GitHub用户名>
+docker pull ghcr.io/<owner>/<repo>:latest
+
+docker run -d \
+  --name llm-answerer \
+  --env-file .env \
+  -e LISTEN_PORT=5000 \
+  -e DB_PATH=/data/answer_cache.db \
+  -p 5000:5000 \
+  -v llm-answerer-data:/data \
+  ghcr.io/<owner>/<repo>:latest
+```
+
+提示：
+- 如果拉取私有包，需要使用具备 `read:packages` 权限的 GitHub Token 登录。
+- 首次推送后可在仓库的 Packages 页面确认镜像是否发布成功。
+
 ## 工作流程
 
 ### 完整请求流程
